@@ -1,0 +1,51 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - '9090:9090'
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - '3001:3000'
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    environment:
+      - ALERTMANAGER_SLACK_WEBHOOK_URL=${ALERTMANAGER_SLACK_WEBHOOK_URL}
+    ports:
+      - '9093:9093'
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    command: /bin/sh -c "envsubst < /etc/alertmanager/alertmanager.yml > /tmp/alertmanager.yml && /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  grafana-storage:
+    driver: local
+  redis-data:
+    driver: local

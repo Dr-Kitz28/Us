@@ -1,0 +1,100 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    paths:
+      - 'infra/terraform/**'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Set to true to run apply (protect with environment approvals)'
+        required: true
+        default: 'false'
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
+
+      - name: Terraform Format Check
+        working-directory: infra/terraform
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        working-directory: infra/terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra/terraform
+        run: terraform plan -out=tfplan -input=false
+
+      - name: Save plan artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: infra/terraform/tfplan
+
+  terraform-apply:
+    name: Terraform Apply (manual)
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'true'
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        run: |
+          terraform apply -auto-approve -input=false -var 'create_k8s_service_account=true'
+
+      - name: Update kubeconfig for EKS
+        uses: aws-actions/amazon-eks-update-kubeconfig@v2
+        with:
+          cluster-name: ${{ secrets.EKS_CLUSTER_NAME }}
+          region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify ServiceAccount
+        run: |
+          kubectl get sa ${TF_VAR_app_service_account_name:-uz-app-sa} -n ${TF_VAR_app_service_account_namespace:-default}

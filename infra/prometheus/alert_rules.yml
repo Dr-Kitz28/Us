@@ -1,0 +1,11 @@
+groups:
+  - name: uz-alerts
+    rules:
+      - alert: HighRecommendationsErrorRate
+        expr: rate(recommendations_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High recommendations error rate"
+          description: "recommendations_errors_total rate > 0.1/sec for 2 minutes"

@@ -1,0 +1,33 @@
+name: Terraform Apply (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve -input=false

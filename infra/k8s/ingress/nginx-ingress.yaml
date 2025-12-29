@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uz-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: uz.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: uz-nextjs-svc
+                port:
+                  number: 80
+  # To enable TLS, add a tls section and a TLS secret
+#  tls:
+#    - hosts:
+#        - uz.example.com
+#      secretName: uz-tls

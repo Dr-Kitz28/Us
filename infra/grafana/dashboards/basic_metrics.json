@@ -1,0 +1,95 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {},
+      "targets": [
+        { "expr": "recommendations_cache_hit_total", "legendFormat": "hits", "refId": "A" }
+      ],
+      "title": "RSBM Cache Hits",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {},
+      "targets": [
+        { "expr": "recommendations_cache_miss_total", "legendFormat": "misses", "refId": "A" }
+      ],
+      "title": "RSBM Cache Misses",
+      "type": "stat"
+    }
+    ,
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": {},
+      "targets": [
+        { "expr": "api_response_time_p95", "legendFormat": "p95(ms)", "refId": "A" }
+      ],
+      "title": "API Response Time (p95)",
+      "type": "graph"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "options": {},
+      "targets": [
+        { "expr": "recommendations_errors_total", "legendFormat": "errors", "refId": "A" }
+      ],
+      "title": "Recommendations Errors",
+      "type": "graph"
+    }
+    ,
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 5,
+      "options": {},
+      "targets": [
+        { "expr": "sum by (route) (api_errors_total)", "legendFormat": "{{route}}", "refId": "A" }
+      ],
+      "title": "API Errors by Route",
+      "type": "graph"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 6,
+      "options": {},
+      "targets": [
+        { "expr": "topk(10, api_response_time_p95{route=\"/api/enhanced-recommendations\"})", "legendFormat": "{{userId}}", "refId": "A" }
+      ],
+      "title": "Recommendations Latency (top 10 userId)",
+      "type": "graph",
+      "description": "High-cardinality: only use for troubleshooting. Avoid long retention or wide label cardinality in production."
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Uz - Basic Metrics",
+  "uid": "uz-basic-metrics",
+  "version": 1
+}

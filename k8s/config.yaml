@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dating-app-config
+  namespace: dating-app
+data:
+  nextauth-url: "https://dating-app.com"
+  kafka-brokers: "kafka-service:9092"
+  opensearch-url: "https://opensearch-service:9200"
+  minio-endpoint: "minio-service:9000"
+  # Feature flags
+  feature-rsbm-matching: "true"
+  feature-thompson-sampling: "true"
+  feature-daily-compatible: "true"
+  feature-verified-boost: "true"
+  # Rate limits
+  rate-limit-likes-per-day: "100"
+  rate-limit-messages-per-day: "500"
+  rate-limit-otp-per-hour: "3"
+  # Matching parameters
+  matching-feed-size: "20"
+  matching-exploration-rate: "0.1"
+  matching-fairness-enabled: "true"
+  # Safety parameters
+  safety-auto-block-threshold: "5"
+  safety-review-queue-sla-minutes: "60"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dating-app-secrets
+  namespace: dating-app
+type: Opaque
+stringData:
+  database-url: "postgresql://user:password@postgres-service:5432/dating_app"
+  redis-url: "redis://:redispass@redis-service:6379"
+  nextauth-secret: "CHANGE_ME_IN_PRODUCTION"
+  minio-access-key: "minioadmin"
+  minio-secret-key: "minioadmin"
+  jwt-secret: "CHANGE_ME_IN_PRODUCTION"
+  encryption-key: "CHANGE_ME_32_CHAR_BASE64_KEY_HERE"
+  otp-secret: "CHANGE_ME_IN_PRODUCTION"
+  # Third-party API keys
+  twilio-account-sid: ""
+  twilio-auth-token: ""
+  sendgrid-api-key: ""
+  cloudinary-api-key: ""
+  cloudinary-api-secret: ""
