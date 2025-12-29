@@ -25,7 +25,8 @@ jobs:
           --health-cmd="pg_isready -U postgres -d testdb" --health-interval=10s --health-timeout=5s --health-retries=5
 
     env:
-      DATABASE_URL: "postgresql://postgres:Shivdu@#2428@db.adsjdvssfruodzomjudd.supabase.co:5432/postgres"
+      # Use the local Postgres service started by the job for CI tests
+      DATABASE_URL: "postgres://postgres:postgres@localhost:5432/testdb"
 
     steps:
       - uses: actions/checkout@v4
