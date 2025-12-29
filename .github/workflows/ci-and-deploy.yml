@@ -10,8 +10,22 @@ jobs:
   test-build:
     runs-on: ubuntu-latest
     env:
-      # Use repository secret for DATABASE_URL so Prisma can run in CI
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Use a local Postgres service for tests; override with secrets if needed
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/test_db
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
