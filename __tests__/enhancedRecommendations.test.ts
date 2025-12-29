@@ -1,4 +1,4 @@
-import { ResearchBackedMatcher } from '@/app/api/enhanced-recommendations/route'
+import { ResearchBackedMatcher } from '@/lib/recommendations/ResearchBackedMatcher'
 import { prisma } from '@/lib/prisma'
 
 jest.mock('@/lib/cache/redisCache', () => ({
