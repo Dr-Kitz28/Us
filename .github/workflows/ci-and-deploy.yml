@@ -43,8 +43,8 @@ jobs:
           done
           pg_isready -h localhost -p 5432 -U postgres || (echo "Postgres did not become ready" && exit 1)
 
-      - name: Run Prisma migrations
-        run: npx prisma migrate deploy
+      - name: Sync Prisma schema to DB (CI)
+        run: npx prisma db push --accept-data-loss
 
       - name: Run tests
         run: |
@@ -77,15 +77,12 @@ jobs:
         run: npm ci
 
       - name: Run Prisma migrations (production)
+        if: ${{ secrets.DATABASE_URL != '' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          if [ -n "${DATABASE_URL}" ]; then
-            echo "Running Prisma migrations against production DB"
-            npx prisma migrate deploy
-          else
-            echo "Skipping Prisma migrations; DATABASE_URL not set"
-          fi
+          echo "Running Prisma migrations against production DB"
+          npx prisma migrate deploy
 
       - name: Deploy to Vercel via CLI
         env:

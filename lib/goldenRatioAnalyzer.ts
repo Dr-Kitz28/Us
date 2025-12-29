@@ -125,7 +125,7 @@ export class GoldenRatioAnalyzer {
       this.isModelLoaded = true
       // Save model on globalThis so subsequent imports reuse the same instance
       try {
-        ;(globalThis as any).__goldenRatioModel = this.model
+        (globalThis as any).__goldenRatioModel = this.model
       } catch (e) {
         // ignore if we can't write to globalThis for some reason
       }
