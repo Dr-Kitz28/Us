@@ -25,7 +25,7 @@ jobs:
           --health-cmd="pg_isready -U postgres -d testdb" --health-interval=10s --health-timeout=5s --health-retries=5
 
     env:
-      DATABASE_URL: "postgres://postgres:postgres@localhost:5432/testdb"
+      DATABASE_URL: "postgresql://postgres:Shivdu@#2428@db.adsjdvssfruodzomjudd.supabase.co:5432/postgres"
 
     steps:
       - uses: actions/checkout@v4
