@@ -16,7 +16,7 @@ interface UserCompatibilityScore {
   reasonsForMatch: string[]
 }
 
-class ResearchBackedMatcher {
+export class ResearchBackedMatcher {
   // Implements multiple research-backed algorithms
   
   static async getRecommendations(currentUserId: string, limit: number = 10): Promise<UserCompatibilityScore[]> {

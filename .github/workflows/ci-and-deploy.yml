@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+
       - name: Run tests
         run: |
           if npm run test --silent; then echo "tests passed"; else echo "tests failed"; exit 1; fi

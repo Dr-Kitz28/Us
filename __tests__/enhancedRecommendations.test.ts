@@ -23,6 +23,12 @@ describe('Enhanced recommendations', () => {
       return null
     })
 
+    // mock prisma.user.findMany to return candidate users with profiles
+    jest.spyOn(prisma.user, 'findMany' as any).mockResolvedValue([
+      { id: 'cand-1', email: 'cand1@example.com', profile: { id: 'p1' } },
+      { id: 'cand-2', email: 'cand2@example.com', profile: { id: 'p2' } }
+    ])
+
     // call internal method directly
     const results = await ResearchBackedMatcher.getRSBMRecommendations('me@example.com', 5)
 
@@ -53,6 +59,12 @@ describe('Enhanced recommendations', () => {
       }
       return { id: opts.where?.id || 'cand-id', email: 'user@example.com', profile: {} }
     })
+
+    // mock prisma.user.findMany to return candidate users with profiles
+    jest.spyOn(prisma.user, 'findMany' as any).mockResolvedValue([
+      { id: 'cand-1', email: 'cand1@example.com', profile: { id: 'p1' } },
+      { id: 'cand-2', email: 'cand2@example.com', profile: { id: 'p2' } }
+    ])
 
     const results = await ResearchBackedMatcher.getRSBMRecommendations('me@example.com', 5)
 
