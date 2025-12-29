@@ -68,6 +68,17 @@ export class GoldenRatioAnalyzer {
   // Initialize TensorFlow model for facial landmark detection and ratio analysis
   private async initializeModel() {
     try {
+      // If a model has already been created in this Node process (build/runtime), reuse it.
+      // This prevents TensorFlow from re-registering variables/kernels and throwing
+      // errors like "Variable with name ... was already registered" when the
+      // module is imported multiple times during Next.js build/SSR.
+      const gw = globalThis as any
+      if (gw.__goldenRatioModel) {
+        this.model = gw.__goldenRatioModel
+        this.isModelLoaded = true
+        console.log('🎯 Reusing existing Golden Ratio model instance')
+        return
+      }
       // In production, this would load a pre-trained model
       // For now, we'll create a basic neural network architecture
       this.model = tf.sequential({
@@ -112,6 +123,13 @@ export class GoldenRatioAnalyzer {
       })
 
       this.isModelLoaded = true
+      // Save model on globalThis so subsequent imports reuse the same instance
+      try {
+        ;(globalThis as any).__goldenRatioModel = this.model
+      } catch (e) {
+        // ignore if we can't write to globalThis for some reason
+      }
+
       console.log('🎯 Golden Ratio Neural Network initialized')
       
     } catch (error) {

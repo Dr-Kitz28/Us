@@ -3,6 +3,8 @@ import './globals.css'
 import '@/lib/cache/initCache'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Uz',
   description: 'Find your perfect match with Uz',
