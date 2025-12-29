@@ -50,10 +50,9 @@ jobs:
           if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then echo "VERCEL_PROJECT_ID: MISSING"; else echo "VERCEL_PROJECT_ID: PRESENT"; fi
 
       - name: Deploy to Vercel (official)
-        uses: vercel/actions/cli@v1
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        uses: vercel/vercel-action@v2
         with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           args: deploy --prod --confirm
