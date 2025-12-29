@@ -12,6 +12,9 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
+    env:
+      # Use a repository secret for DATABASE_URL to avoid leaking credentials
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
