@@ -76,6 +76,14 @@ jobs:
       - name: Install dependencies for deploy
         run: npm ci
 
+      - name: Run Prisma migrations (production)
+        if: ${{ secrets.DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running Prisma migrations against production DB"
+          npx prisma migrate deploy
+
       - name: Deploy to Vercel via CLI
         env:
           VERCEL_TOKEN: ${{ secrets.ACTIONS_DEPLOY_VERCEL_TOKEN }}
