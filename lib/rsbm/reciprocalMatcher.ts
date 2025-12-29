@@ -115,30 +115,30 @@ export class HardGateFilter {
     return false
   }
 
-  private async getCandidateAge(candidateId: string): Promise<number> {
+  private async getCandidateAge(_candidateId: string): Promise<number> {
     // Fetch from user profile
     return 25 // Placeholder
   }
 
   private async calculateDistance(
-    userId: string,
-    candidateId: string
+    _userId: string,
+    _candidateId: string
   ): Promise<number> {
     // Calculate geographic distance
     return 5 // Placeholder in km
   }
 
   private async checkGenderPreference(
-    userId: string,
-    candidateId: string,
-    preferredGender: string
+    _userId: string,
+    _candidateId: string,
+    _preferredGender: string
   ): Promise<boolean> {
     return true // Placeholder
   }
 
   private async checkDealbreakers(
-    candidateId: string,
-    dealbreakers: UserPreferences['dealbreakers']
+    _candidateId: string,
+    _dealbreakers: UserPreferences['dealbreakers']
   ): Promise<string | null> {
     return null // Placeholder
   }
@@ -190,7 +190,7 @@ export class PreferenceModel {
     return 0.6 * mutualityScore + 0.4 * compatScore
   }
 
-  private async getUserEmbedding(userId: string): Promise<number[]> {
+  private async getUserEmbedding(_userId: string): Promise<number[]> {
     // Fetch or compute user embedding vector
     // Dimensions: interests, behavior, preferences, demographics
     return Array(128).fill(0.5) // Placeholder 128-dim vector
@@ -204,28 +204,28 @@ export class PreferenceModel {
   }
 
   private async contentBasedScore(
-    userId1: string,
-    userId2: string
+    _userId1: string,
+    _userId2: string
   ): Promise<number> {
     // Profile attribute similarity
     return 0.7 // Placeholder
   }
 
   private async collaborativeFilteringScore(
-    userId1: string,
-    userId2: string
+    _userId1: string,
+    _userId2: string
   ): Promise<number> {
     // "Users who liked X also liked Y" patterns
     return 0.6 // Placeholder
   }
 
-  private async getUserResponseRate(userId: string): Promise<number> {
+  private async getUserResponseRate(_userId: string): Promise<number> {
     return 0.8 // Placeholder
   }
 
   private async conversationCompatibility(
-    userId1: string,
-    userId2: string
+    _userId1: string,
+    _userId2: string
   ): Promise<number> {
     return 0.75 // Placeholder
   }
@@ -541,7 +541,7 @@ export class FairnessController {
     return candidates.sort((a, b) => b.reciprocalScore - a.reciprocalScore)
   }
 
-  async calibrateByCohor(candidateIds: string[]): Promise<void> {
+  async calibrateByCohor(_candidateIds: string[]): Promise<void> {
     // Periodically check: are predicted match rates aligned with observed rates?
     // If model under-predicts for certain cohorts, recalibrate
   }
@@ -559,7 +559,7 @@ export class FairnessController {
     return groups
   }
 
-  private async getCohortValue(userId: string, field: string): Promise<string> {
+  private async getCohortValue(_userId: string, _field: string): Promise<string> {
     return 'default' // Placeholder
   }
 
@@ -705,7 +705,7 @@ export class RSBMEngine {
       })
 
       return candidates.map(c => c.id)
-    } catch (e) {
+    } catch {
       // On error, return empty pool to keep behaviour safe
       return []
     }

@@ -1,7 +1,7 @@
 // Research-backed recommendation engine API with RSBM integration
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { RSBMEngine } from '@/lib/rsbm/reciprocalMatcher';
 import { logger, metrics } from '@/lib/observability/monitoring';
@@ -16,7 +16,7 @@ interface UserCompatibilityScore {
   reasonsForMatch: string[]
 }
 
-export class ResearchBackedMatcher {
+class ResearchBackedMatcher {
   // Implements multiple research-backed algorithms
   
   static async getRecommendations(currentUserId: string, limit: number = 10): Promise<UserCompatibilityScore[]> {
@@ -162,7 +162,6 @@ export class ResearchBackedMatcher {
         await cache.cacheFeedCandidates(
           currentUser.id,
           rsbmFeed.mainFeed.concat(rsbmFeed.explorationCandidates).map((c: any) => ({ id: c.candidateId || c.userId || c.id, score: c.reciprocalScore || c.score || 0 })),
-          900
         )
         metrics.incrementCounter('recommendations.cache_written', 1, { env, userId: currentUser.id })
       } catch (e) {
@@ -196,7 +195,7 @@ export class ResearchBackedMatcher {
 
       // Add main feed candidates
       for (const candidate of (rsbmFeed.mainFeed || []).slice(0, limit - 1)) {
-        const userId = candidate.candidateId || candidate.userId || candidate.id
+        const userId = (candidate as any).candidateId || (candidate as any).userId || (candidate as any).id
         const user = await prisma.user.findUnique({
           where: { id: userId },
           include: { profile: true },
@@ -224,8 +223,8 @@ export class ResearchBackedMatcher {
 
       return recommendations;
     } catch (error) {
-      logger.error('RSBM recommendations failed', { error, currentUserId });
-      metrics.incrementCounter('recommendations.errors', { algorithm: 'rsbm' });
+      logger.error('RSBM recommendations failed', error as Error, { currentUserId });
+      metrics.incrementCounter('recommendations.errors', 1, { algorithm: 'rsbm' });
       return [];
     }
   }
@@ -435,7 +434,7 @@ export async function GET(request: NextRequest) {
     if (useAdvanced) {
       // Use research-backed matching
       const recommendations = await ResearchBackedMatcher.getRecommendations(
-        session.user.email, 
+        session.user.email!, 
         limit
       )
       

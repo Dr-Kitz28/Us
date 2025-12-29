@@ -74,7 +74,7 @@ export class SafetyEngine {
   /**
    * Submit a report
    */
-  async submitReport(report: Omit<SafetyReport, 'id' | 'status' | 'createdAt'>): Promise<string> {
+  async submitReport(report: Omit<SafetyReport, 'id' | 'status' | 'createdAt' | 'priority'>): Promise<{ reportId: string; priority: 'low' | 'medium' | 'high' | 'critical'; autoEnforced: boolean }> {
     const reportId = this.generateReportId()
     
     const fullReport: SafetyReport = {
@@ -82,17 +82,20 @@ export class SafetyEngine {
       id: reportId,
       status: ReportStatus.PENDING,
       createdAt: new Date(),
+      priority: 'low',
     }
 
-    // Determine priority based on category
+    // Determine priority based on category (overwrite placeholder)
     fullReport.priority = this.determinePriority(report.category)
 
     // Store report
     await this.storeReport(fullReport)
 
     // Auto-action for critical reports
+    let autoEnforced = false
     if (fullReport.priority === 'critical') {
       await this.autoEnforceAction(fullReport)
+      autoEnforced = true
     }
 
     // Notify moderation queue
@@ -101,7 +104,7 @@ export class SafetyEngine {
     // Send confirmation to reporter
     await this.notifyReporter(report.reporterId, reportId)
 
-    return reportId
+    return { reportId, priority: fullReport.priority, autoEnforced }
   }
 
   /**
@@ -158,7 +161,7 @@ export class SafetyEngine {
     reportId: string,
     reviewerId: string,
     action: ModerationAction
-  ): Promise<void> {
+  ): Promise<{ success: boolean; action?: ModerationAction; message?: string }> {
     const report = await this.getReport(reportId)
     if (!report) throw new Error('Report not found')
 
@@ -176,7 +179,7 @@ export class SafetyEngine {
         await this.restrictUser(report.reportedUserId, action.reason)
         break
       case 'suspend':
-        await this.suspendUser(report.reportedUserId, action.reason, action.duration)
+        await this.suspendUser(report.reportedUserId, action.reason, action.duration ?? null)
         break
       case 'ban':
         await this.banUser(report.reportedUserId, action.reason)
@@ -195,6 +198,8 @@ export class SafetyEngine {
     if (action.type !== 'none') {
       await this.notifyReportedUser(report.reportedUserId, action)
     }
+
+    return { success: true, action, message: 'Report reviewed' }
   }
 
   /**
@@ -355,12 +360,12 @@ export class SafetyEngine {
     // Store in database
   }
 
-  private async getReport(reportId: string): Promise<SafetyReport | null> {
+  private async getReport(_reportId: string): Promise<SafetyReport | null> {
     // Fetch from database
     return null
   }
 
-  private async updateReport(report: SafetyReport): Promise<void> {
+  private async updateReport(_report: SafetyReport): Promise<void> {
     // Update in database
   }
 
@@ -382,19 +387,19 @@ export class SafetyEngine {
     }
   }
 
-  private async updateSafetyFlags(flags: UserSafetyFlags): Promise<void> {
+  private async updateSafetyFlags(_flags: UserSafetyFlags): Promise<void> {
     // Update in database + invalidate cache
   }
 
-  private async notifyModerationQueue(report: SafetyReport): Promise<void> {
+  private async notifyModerationQueue(_report: SafetyReport): Promise<void> {
     // Publish event to moderation queue (Kafka/SQS)
   }
 
-  private async notifyReporter(reporterId: string, reportId: string): Promise<void> {
+  private async notifyReporter(_reporterId: string, _reportId: string): Promise<void> {
     // Send notification to reporter
   }
 
-  private async notifyReportedUser(userId: string, action: ModerationAction): Promise<void> {
+  private async notifyReportedUser(_userId: string, _action: ModerationAction): Promise<void> {
     // Send notification to reported user
   }
 
@@ -508,14 +513,14 @@ export class BlockManager {
   }
 
   // Placeholder implementations
-  private async storeBlock(blockerId: string, blockedId: string): Promise<void> {}
-  private async removeBlock(blockerId: string, blockedId: string): Promise<void> {}
-  private async checkBlock(userId1: string, userId2: string): Promise<boolean> {
+  private async storeBlock(_blockerId: string, _blockedId: string): Promise<void> {}
+  private async removeBlock(_blockerId: string, _blockedId: string): Promise<void> {}
+  private async checkBlock(_userId1: string, _userId2: string): Promise<boolean> {
     return false
   }
-  private async removeFromUserFeed(userId: string, excludeId: string): Promise<void> {}
-  private async deleteMatch(userId1: string, userId2: string): Promise<void> {}
-  private async deleteConversation(userId1: string, userId2: string): Promise<void> {}
+  private async removeFromUserFeed(_userId: string, _excludeId: string): Promise<void> {}
+  private async deleteMatch(_userId1: string, _userId2: string): Promise<void> {}
+  private async deleteConversation(_userId1: string, _userId2: string): Promise<void> {}
 }
 
 // Export all safety utilities

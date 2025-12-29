@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
@@ -13,7 +13,7 @@ export async function GET() {
 
     // Find users that the current user hasn't liked or passed yet
     const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
       include: { 
         likesGiven: true,
         // passesGiven: true  // Temporarily disabled until Prisma client is regenerated

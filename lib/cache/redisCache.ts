@@ -25,10 +25,10 @@ export interface CacheConfig {
 }
 
 export class RedisCache {
-  private client: RedisClientType
-  private isConnected: boolean = false
+  protected client: RedisClientType
+  protected isConnected: boolean = false
 
-  constructor(private config: CacheConfig) {
+  constructor(protected config: CacheConfig) {
     this.client = createClient({
       url: config.redis.url,
       password: config.redis.password,

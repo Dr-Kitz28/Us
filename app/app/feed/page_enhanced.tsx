@@ -22,7 +22,7 @@ export default function FeedPage() {
   useEffect(() => {
     if (session?.user?.email && qualityFocusEnabled) {
       // Fetch personalized matches from our research-backed API
-      fetch(`/api/matches?userEmail=${encodeURIComponent(session.user.email)}`)
+      fetch(`/api/matches?userEmail=${encodeURIComponent(session.user.email!)}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.matches.length > 0) {

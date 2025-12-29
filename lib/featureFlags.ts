@@ -91,3 +91,19 @@ export const featureFlags = {
   FEATURE_BURNOUT_PREVENTION: isFeatureEnabled('burnoutPrevention'),
   FEATURE_DIVERSITY: isFeatureEnabled('diversityInjection'),
 }
+
+// Backwards-compatible helpers expected by admin routes
+export function getFeatureFlag(name: FeatureName): boolean {
+  return isFeatureEnabled(name)
+}
+
+// Runtime setter (no-op in this build; in production this would persist to a config service)
+export function setFeatureFlag(name: FeatureName, enabled: boolean): void {
+  // For now, update process.env for local dev (non-persistent)
+  try {
+    const envKey = `FEATURE_${name.toUpperCase()}`
+    process.env[envKey] = enabled ? '1' : '0'
+  } catch {
+    // ignore
+  }
+}

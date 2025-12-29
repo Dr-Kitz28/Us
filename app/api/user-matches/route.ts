@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
@@ -13,7 +13,7 @@ export async function GET() {
 
     // Find current user
     const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email! }
     })
 
     if (!currentUser) {

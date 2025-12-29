@@ -220,7 +220,7 @@ export default function MessagesPage() {
         }
 
         if (requestedMatchId) {
-          const found = normalized.find(m => m.id === requestedMatchId)
+          const found = normalized.find((m: Match) => m.id === requestedMatchId)
           if (found) setSelectedMatch(found)
           else if (normalized.length > 0 && !selectedMatch) setSelectedMatch(normalized[0])
         } else {
@@ -285,7 +285,7 @@ export default function MessagesPage() {
     }
   }
 
-  const useConversationStarter = (starter: string) => {
+  const applyConversationStarter = (starter: string) => {
     setNewMessage(starter)
     setConversationStarters([])
   }
@@ -453,7 +453,7 @@ export default function MessagesPage() {
                       {conversationStarters.map((starter, index) => (
                         <button
                           key={index}
-                          onClick={() => useConversationStarter(starter)}
+                          onClick={() => applyConversationStarter(starter)}
                           className="w-full p-3 text-left text-sm bg-white rounded-lg hover:bg-purple-50 border border-purple-100 transition-colors"
                         >
                           "{starter}"

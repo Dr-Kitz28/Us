@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getCache } from '@/lib/cache/redisCache'
 import { createClient } from 'redis'
@@ -8,9 +8,10 @@ import { createClient } from 'redis'
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    const userEmail = session?.user?.email
     const isDevBypass = process.env.NODE_ENV !== 'production' && (request.headers.get('x-dev-bypass') === '1' || request.nextUrl.searchParams.get('dev') === '1')
 
-    if (!session?.user?.email && !isDevBypass) {
+    if (!userEmail && !isDevBypass) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
         currentUser = await prisma.user.findUnique({ where: { email: 'upload_test@example.com' } })
         if (!currentUser) return NextResponse.json({ error: 'Dev test user not found' }, { status: 404 })
       } else {
-        currentUser = await prisma.user.findUnique({ where: { email: session.user.email } })
+        currentUser = await prisma.user.findUnique({ where: { email: userEmail! } })
         if (!currentUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Dev test user not found' }, { status: 404 })
       }
     } else {
-      currentUser = await prisma.user.findUnique({ where: { email: session.user.email } })
+      currentUser = await prisma.user.findUnique({ where: { email: userEmail! } })
       if (!currentUser) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    const userEmail = session?.user?.email
     const isDevBypass = process.env.NODE_ENV !== 'production' && (request.headers.get('x-dev-bypass') === '1' || request.nextUrl.searchParams.get('dev') === '1')
 
     // Support SSE stream via ?stream=1&matchId=... (dev bypass only)
@@ -181,7 +183,7 @@ export async function GET(request: NextRequest) {
       return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' } })
     }
 
-    if (!session?.user?.email && !isDevBypass) {
+    if (!userEmail && !isDevBypass) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -197,7 +199,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Dev test user not found' }, { status: 404 })
       }
     } else {
-      currentUser = await prisma.user.findUnique({ where: { email: session.user.email } })
+      currentUser = await prisma.user.findUnique({ where: { email: userEmail! } })
       if (!currentUser) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }

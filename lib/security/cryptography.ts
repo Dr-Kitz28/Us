@@ -42,7 +42,7 @@ export class FieldEncryption {
       cipher.update(plaintext, 'utf8'),
       cipher.final()
     ])
-    const tag = cipher.getAuthTag()
+    const tag = (cipher as any).getAuthTag()
 
     // Encrypt DEK with KEK (envelope encryption)
     const wrappedDek = this.wrapKey(dek)
@@ -82,7 +82,7 @@ export class FieldEncryption {
 
     // Decrypt ciphertext with DEK
     const decipher = crypto.createDecipheriv(this.algorithm, dek, iv)
-    decipher.setAuthTag(tag)
+    ;(decipher as any).setAuthTag(tag)
     const plaintext = Buffer.concat([
       decipher.update(ciphertext),
       decipher.final()
@@ -98,7 +98,7 @@ export class FieldEncryption {
     const iv = crypto.randomBytes(this.ivLength)
     const cipher = crypto.createCipheriv(this.algorithm, this.kek, iv)
     const wrapped = Buffer.concat([cipher.update(dek), cipher.final()])
-    const tag = cipher.getAuthTag()
+    const tag = (cipher as any).getAuthTag()
     // Return: iv(16) | tag(16) | wrapped(32) = 64 bytes
     return Buffer.concat([iv, tag, wrapped])
   }
@@ -112,7 +112,7 @@ export class FieldEncryption {
     const wrapped = wrappedDek.slice(this.ivLength + this.tagLength)
 
     const decipher = crypto.createDecipheriv(this.algorithm, this.kek, iv)
-    decipher.setAuthTag(tag)
+    ;(decipher as any).setAuthTag(tag)
     const dek = Buffer.concat([decipher.update(wrapped), decipher.final()])
     
     return dek
@@ -260,7 +260,7 @@ export class JWTManager {
    * Sign access token (short-lived)
    */
   signAccessToken(payload: JWTPayload): string {
-    return jwt.sign(payload, this.secret, {
+    return (jwt as any).sign(payload, this.secret, {
       expiresIn: this.accessTokenExpiry,
       issuer: 'dating-app',
       audience: 'dating-app-api',
@@ -271,7 +271,7 @@ export class JWTManager {
    * Sign refresh token (long-lived)
    */
   signRefreshToken(payload: JWTPayload): string {
-    return jwt.sign(payload, this.secret, {
+    return (jwt as any).sign(payload, this.secret, {
       expiresIn: this.refreshTokenExpiry,
       issuer: 'dating-app',
       audience: 'dating-app-refresh',
@@ -283,7 +283,7 @@ export class JWTManager {
    */
   verify(token: string): JWTPayload {
     try {
-      const decoded = jwt.verify(token, this.secret, {
+      const decoded = (jwt as any).verify(token, this.secret, {
         issuer: 'dating-app',
       }) as JWTPayload
       return decoded
@@ -475,7 +475,7 @@ export class BrowserSecureStorage implements SecureStorage {
 }
 
 // Export all crypto utilities
-export const crypto Utils = {
+export const cryptoUtils = {
   FieldEncryption,
   SecureHashing,
   PasswordHasher,

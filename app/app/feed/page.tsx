@@ -178,7 +178,7 @@ export default function FeedPage() {
 
     try {
       // Research-backed UX tracking
-      const userId = session.user.email
+      const userId = session.user.email!
       const timeSpent = Date.now() - profileViewStartTime
       
       setSwipeCount(prev => prev + 1)
@@ -239,7 +239,7 @@ export default function FeedPage() {
 
     try {
       // Research-backed UX tracking
-      const userId = session.user.email
+      const userId = session.user.email!
       const timeSpent = Date.now() - profileViewStartTime
       
       setSwipeCount(prev => prev + 1)

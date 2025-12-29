@@ -59,8 +59,8 @@ export async function GET(req: NextRequest) {
       count: reports.length,
     });
   } catch (error) {
-    logger.error('Moderation queue fetch failed', { error, requestId });
-    metrics.incrementCounter('api.errors', { route: '/api/admin/moderation' });
+    logger.error('Moderation queue fetch failed', error as Error, { requestId });
+    metrics.incrementCounter('api.errors', 1, { route: '/api/admin/moderation' });
 
     return NextResponse.json(
       { error: 'Failed to fetch moderation queue', requestId },
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     const moderator = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
     });
 
     if (!moderator) {
@@ -106,12 +106,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Review report through SafetyEngine
-    const result = await safetyEngine.reviewReport({
-      reportId,
-      reviewerId: moderator.id,
-      action, // warn, restrict, suspend, ban, dismiss
-      notes,
-    });
+    const result = await safetyEngine.reviewReport(reportId, moderator.id, action)
 
     metrics.incrementCounter('safety.reports_reviewed', 1, {
       action,
@@ -131,7 +126,7 @@ export async function POST(req: NextRequest) {
       message: result.message,
     });
   } catch (error) {
-    logger.error('Moderation review failed', { error, requestId });
+    logger.error('Moderation review failed', error as Error, { requestId });
     metrics.incrementCounter('api.errors', 1, { route: '/api/admin/moderation/review', env: process.env.NODE_ENV || 'development' });
 
     return NextResponse.json(

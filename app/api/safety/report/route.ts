@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const reporter = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
     });
 
     if (!reporter) {
@@ -42,14 +42,16 @@ export async function POST(req: NextRequest) {
       requestId,
     });
 
+    // Prepare evidence payload (description is nested under evidence in SafetyReport)
+    const evidenceObj = evidence ? { ...evidence, description } : (description ? { description } : undefined)
+
     // Submit report through SafetyEngine
     const report = await safetyEngine.submitReport({
       reporterId: reporter.id,
-      reportedId: reportedUserId,
+      reportedUserId: reportedUserId,
       category,
       reason,
-      description,
-      evidence: evidence ? JSON.stringify(evidence) : null,
+      evidence: evidenceObj,
     });
 
     metrics.incrementCounter('safety.reports_submitted', 1, {
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
         : 'Report submitted for review',
     });
   } catch (error) {
-    logger.error('Safety report submission failed', { error, requestId });
+    logger.error('Safety report submission failed', error as Error, { requestId });
     metrics.incrementCounter('api.errors', 1, { route: '/api/safety/report', env: process.env.NODE_ENV || 'development' });
 
     return NextResponse.json(

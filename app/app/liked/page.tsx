@@ -18,6 +18,7 @@ interface LikedUser {
   likedAt: string
   isMatch: boolean
   matchedAt?: string | null
+  matchId?: string | null
 }
 
 export default function LikedPage() {

@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { GoldenRatioAnalyzer } from '@/lib/goldenRatioAnalyzer'
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
       // Update user profile with photo and Golden Ratio score
       await prisma.user.update({
-        where: { id: session.user.id },
+        where: { id: existingUser!.id },
         data: {
           image: imageUrl,
           profile: {
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's Golden Ratio analysis
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { email: session.user.email! },
       select: {
         image: true,
         profile: {
