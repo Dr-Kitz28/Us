@@ -1,0 +1,32 @@
+name: Run Prod DB Push & Seed
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  push-and-seed:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL != '' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Print DB URL host (masked)
+        run: |
+          echo "Using DATABASE_URL from secrets"
+
+      - name: Sync Prisma schema to production DB
+        run: npx prisma db push --accept-data-loss
+
+      - name: Run seed script
+        run: npm run db:seed
