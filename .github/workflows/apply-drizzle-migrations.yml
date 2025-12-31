@@ -1,0 +1,43 @@
+name: Apply Drizzle Migrations (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply-migrations:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Confirm environment
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "ERROR: DATABASE_URL secret is not set. Aborting.";
+            exit 1;
+          fi
+          echo "DATABASE_URL is set. Proceeding to apply migrations."
+
+      - name: Apply Drizzle migrations (push)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Applying Drizzle migrations to target database..."
+          npm run drizzle:push
+
+      - name: Run optional seed
+        if: ${{ github.event.inputs.run_seed == 'true' }}
+        run: |
+          echo "Running seed script..."
+          npm run db:seed
