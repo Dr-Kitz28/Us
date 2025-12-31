@@ -89,13 +89,13 @@ jobs:
       - name: Wait for Postgres to be ready
         run: |
           echo "Waiting for Postgres..."
-          for i in {1..60}; do
+          for i in {1..30}; do
             pg_isready -h localhost -p 5432 -U postgres && break || sleep 1
           done
           pg_isready -h localhost -p 5432 -U postgres || (echo "Postgres did not become ready" && exit 1)
 
-      - name: Sync DB schema with Drizzle (CI)
-        run: npm run drizzle:push
+      - name: Apply Drizzle migrations (fast)
+        run: npm run drizzle:migrate
 
       - name: Run integration tests
         run: npm test --silent -- -i
