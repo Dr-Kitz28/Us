@@ -24,7 +24,17 @@ function createPrisma(): PrismaClient {
     }
   }
 
-  const client = globalForPrisma.prisma ?? new PrismaClient({ log: ['error', 'warn'] })
+  // Support Prisma Data Proxy: if `PRISMA_DATA_PROXY_URL` is set use it as the
+  // datasource override so the client connects via the Data Proxy endpoint.
+  const dataProxyUrl = process.env.PRISMA_DATA_PROXY_URL
+  const clientOptions: any = { log: ['error', 'warn'] }
+  if (dataProxyUrl) {
+    clientOptions.datasources = { db: { url: dataProxyUrl } }
+    // helpful debug message in non-production
+    if (!isProduction) console.log('Using Prisma Data Proxy via PRISMA_DATA_PROXY_URL')
+  }
+
+  const client = globalForPrisma.prisma ?? new PrismaClient(clientOptions)
   if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = client
   _prismaInstance = client
   return client

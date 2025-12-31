@@ -3,8 +3,24 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+// Safety: require an admin token to run production seeding so only an
+// authorized admin can populate demo data. Set `SEED_ADMIN_TOKEN` in your
+// environment before running the seed script. This prevents accidental
+// seeding in production by regular users or CI.
+if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADMIN_TOKEN) {
+  console.error('Refusing to run seed in production without SEED_ADMIN_TOKEN set')
+  process.exit(1)
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...')
+
+  // Require the admin token to be present for manual runs (even in non-prod)
+  // when the repository owner wants to ensure only admin can run the demo seed.
+  if (!process.env.SEED_ADMIN_TOKEN) {
+    console.warn('SEED_ADMIN_TOKEN not set. Aborting seed to prevent accidental demo data insertion.')
+    process.exit(1)
+  }
 
   // Clear existing data
   await prisma.message.deleteMany()
