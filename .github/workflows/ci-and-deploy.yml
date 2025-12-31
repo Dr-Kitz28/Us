@@ -43,8 +43,8 @@ jobs:
           done
           pg_isready -h localhost -p 5432 -U postgres || (echo "Postgres did not become ready" && exit 1)
 
-      - name: Sync Prisma schema to DB (CI)
-        run: npx prisma db push --accept-data-loss
+      - name: Prepare database
+        run: echo "Skipping Prisma schema sync (using Drizzle). Ensure migrations are applied via Drizzle PR workflow."
 
       - name: Run tests
         run: |
@@ -76,18 +76,12 @@ jobs:
       - name: Install dependencies for deploy
         run: npm ci
 
-      - name: Run Prisma migrations (production)
+      - name: Check DATABASE_URL for deploy
         if: ${{ secrets.DATABASE_URL != '' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          echo "Checking DATABASE_URL before running migrations"
-          if [[ "$DATABASE_URL" == postgres://* || "$DATABASE_URL" == postgresql://* ]]; then
-            echo "DATABASE_URL looks like Postgres — running migrations"
-            npx prisma migrate deploy
-          else
-            echo "DATABASE_URL does not appear to be Postgres. Skipping migrations."
-          fi
+          echo "DATABASE_URL provided. Use Drizzle PR workflow to apply migrations to production."
 
       - name: Deploy to Vercel via CLI
         env:

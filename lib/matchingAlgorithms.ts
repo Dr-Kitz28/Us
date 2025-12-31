@@ -1,5 +1,5 @@
 // Enhanced matching algorithms based on research insights
-import { User, Profile, Like, Match } from '@prisma/client'
+import { User, Profile, Like, Match } from '@/lib/prisma-types'
 
 export interface MatchingScore {
   userId: string

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
 
 // Safety: require an admin token to run production seeding so only an
 // authorized admin can populate demo data. Set `SEED_ADMIN_TOKEN` in your

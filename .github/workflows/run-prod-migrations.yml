@@ -32,8 +32,9 @@ jobs:
         run: |
           echo "Using DATABASE_URL from secrets"
 
-      - name: Sync Prisma schema to production DB
-        run: npx prisma db push --accept-data-loss
+      - name: Note about migrations
+        run: |
+          echo "This workflow no longer runs Prisma. Use the Drizzle migration PR workflow to generate and review migrations before applying to production."
 
       - name: Run seed script
         run: npm run db:seed
