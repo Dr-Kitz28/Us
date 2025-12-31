@@ -1,0 +1,36 @@
+name: Drizzle Migration Check (PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Drizzle migration (check)
+        # Generate migrations and ensure they are committed in the PR.
+        run: |
+          echo "Running drizzle-kit generate to detect uncommitted migrations..."
+          npm run drizzle:generate -- --name="ci-check-$(date +%s)" || true
+          git --no-pager diff --exit-code || (
+            echo "\nERROR: Drizzle migrations appear to be missing from this PR.\n";
+            echo "Run: npm run drizzle:generate -- --name=your-change-name";
+            echo "Commit the generated files under drizzle/migrations and push the PR.";
+            exit 1
+          )
+
+      - name: Run tests
+        run: npm test --silent
