@@ -7,11 +7,43 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
+  unit-tests:
+    name: Unit Tests (fast)
     runs-on: ubuntu-latest
-    env:
-      # Toggle to install Playwright browsers in CI when true (default: false)
-      RUN_PLAYWRIGHT: 'false'
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (unit)
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Run unit tests
+        run: npm test --silent -- -i
+
+  integration-tests:
+    name: Integration Tests (DB)
+    runs-on: ubuntu-latest
+    needs: unit-tests
     strategy:
       matrix:
         node-version: [18.x]
@@ -28,11 +60,11 @@ jobs:
           --health-cmd="pg_isready -U postgres -d testdb" --health-interval=10s --health-timeout=5s --health-retries=5
 
     env:
-      # Use the local Postgres service started by the job for CI tests
       DATABASE_URL: "postgres://postgres:postgres@localhost:5432/testdb"
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -42,19 +74,17 @@ jobs:
       - name: Cache npm
         uses: actions/cache@v4
         with:
-          path: ~/.npm
+          path: |
+            ~/.npm
+            node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies
+      - name: Install dependencies (integration)
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm ci --prefer-offline --no-audit --progress=false
-
-      - name: Install Playwright browsers (optional)
-        if: ${{ env.RUN_PLAYWRIGHT == 'true' }}
-        run: npx playwright install --with-deps
 
       - name: Wait for Postgres to be ready
         run: |
@@ -67,5 +97,39 @@ jobs:
       - name: Sync DB schema with Drizzle (CI)
         run: npm run drizzle:push
 
-      - name: Run tests
-        run: npm test --silent
+      - name: Run integration tests
+        run: npm test --silent -- -i
+
+  playwright-tests:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (playwright)
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test --reporter=list
