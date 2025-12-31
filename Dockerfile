@@ -7,14 +7,10 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma/
 
 # Install dependencies
 RUN npm ci --only=production && \
     npm cache clean --force
-
-# Generate Prisma Client
-RUN npx prisma generate
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
