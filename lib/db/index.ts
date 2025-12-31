@@ -12,21 +12,24 @@
 
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
+import { drizzle as drizzleVercel } from 'drizzle-orm/vercel-postgres'
+import { sql as vercelSql } from '@vercel/postgres'
 import { neon } from '@neondatabase/serverless'
 import postgres from 'postgres'
 import * as schema from './schema'
 
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
-const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME
+const isVercel = process.env.VERCEL === '1'
+const isServerless = isVercel || process.env.AWS_LAMBDA_FUNCTION_NAME
 
-// Database URL validation
+// Database URL validation - prioritize POSTGRES_URL for Vercel
 function getDbUrl(): string {
-  const url = process.env.DATABASE_URL
+  const url = process.env.POSTGRES_URL || process.env.DATABASE_URL
   
   if (!url) {
     throw new Error(
-      'Missing DATABASE_URL environment variable. ' +
+      'Missing POSTGRES_URL or DATABASE_URL environment variable. ' +
       'Set it to a PostgreSQL connection string.'
     )
   }
@@ -61,10 +64,23 @@ function getDbUrl(): string {
 // Singleton pattern for connection reuse
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null
 let _dbNeon: ReturnType<typeof drizzleNeon<typeof schema>> | null = null
+let _dbVercel: ReturnType<typeof drizzleVercel<typeof schema>> | null = null
 
 /**
- * Get database instance optimized for serverless
- * Uses Neon HTTP driver - ideal for Vercel Edge
+ * Get database instance optimized for Vercel Postgres
+ * Uses @vercel/postgres driver - ideal for Vercel serverless
+ */
+export function getVercelDb() {
+  if (_dbVercel) return _dbVercel
+  
+  _dbVercel = drizzleVercel(vercelSql, { schema })
+  
+  return _dbVercel
+}
+
+/**
+ * Get database instance optimized for serverless (Neon)
+ * Uses Neon HTTP driver - fallback for non-Vercel serverless
  */
 export function getServerlessDb() {
   if (_dbNeon) return _dbNeon
@@ -109,7 +125,12 @@ export function getPooledDb() {
  * Auto-detect best connection strategy
  */
 export function getDb() {
-  // Serverless environments: use HTTP driver
+  // Vercel serverless: use @vercel/postgres driver
+  if (isVercel) {
+    return getVercelDb()
+  }
+  
+  // Other serverless environments: use Neon HTTP driver
   if (isServerless) {
     return getServerlessDb()
   }

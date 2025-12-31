@@ -13,7 +13,8 @@ export default {
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    // Prioritize POSTGRES_URL for Vercel, fallback to DATABASE_URL for local
+    url: process.env.POSTGRES_URL || process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,
