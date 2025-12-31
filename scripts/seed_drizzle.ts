@@ -1,16 +1,17 @@
 import bcrypt from 'bcryptjs'
 import { db, users, profiles, photos, likes, matches, messages } from '@/lib/db'
+import { sql } from 'drizzle-orm'
 
 async function main(){
   console.log('🌱 Starting Drizzle database seeding...')
 
   // Clear existing data (order matters for FK constraints)
-  await db.delete(messages).where(true)
-  await db.delete(matches).where(true)
-  await db.delete(likes).where(true)
-  await db.delete(photos).where(true)
-  await db.delete(profiles).where(true)
-  await db.delete(users).where(true)
+  await db.delete(messages).where(sql`true`)
+  await db.delete(matches).where(sql`true`)
+  await db.delete(likes).where(sql`true`)
+  await db.delete(photos).where(sql`true`)
+  await db.delete(profiles).where(sql`true`)
+  await db.delete(users).where(sql`true`)
 
   const usersData = [
     { email: 'alex@example.com', name: 'Alex Thompson', age: 28, bio: 'Love hiking and photography. Looking for someone who enjoys outdoor adventures and deep conversations.', interests: ['hiking','photography','travel','books'], location: 'Seattle, WA' },
@@ -26,14 +27,14 @@ async function main(){
   ]
 
   const hashed = await bcrypt.hash('password123', 10)
-  const createdUsers: Array<{ id: string, name: string }> = []
+  const createdUsers: Array<{ id: string, name: string | null }> = []
 
   for(const u of usersData){
     const [inserted] = await db.insert(users).values({
       email: u.email,
       password: hashed,
       name: u.name,
-    }).returning({ id: users.id, name: users.name })
+    }).returning()
 
     await db.insert(profiles).values({
       userId: inserted.id,
@@ -60,7 +61,7 @@ async function main(){
     const u2 = createdUsers[b]
     await db.insert(likes).values({ fromId: u1.id, toId: u2.id }).onConflictDoNothing()
     await db.insert(likes).values({ fromId: u2.id, toId: u1.id }).onConflictDoNothing()
-    const [m] = await db.insert(matches).values({ user1Id: u1.id < u2.id ? u1.id : u2.id, user2Id: u1.id < u2.id ? u2.id : u1.id }).returning({ id: matches.id })
+    const [m] = await db.insert(matches).values({ user1Id: u1.id < u2.id ? u1.id : u2.id, user2Id: u1.id < u2.id ? u2.id : u1.id }).returning()
     await db.insert(messages).values([
       { matchId: m.id, senderId: u1.id, content: `Hi ${u2.name}! Great to match with you 😊` },
       { matchId: m.id, senderId: u2.id, content: `Hey ${u1.name}! Thanks for the like, excited to chat!` }

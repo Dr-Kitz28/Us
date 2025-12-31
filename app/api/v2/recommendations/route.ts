@@ -29,8 +29,8 @@ import {
 } from '@/lib/cache'
 import { eq, and, or, ne, notInArray, sql, desc } from 'drizzle-orm'
 
-// Edge runtime for <75ms response times
-export const runtime = 'edge'
+// Force Node.js runtime so Node-only modules (ioredis, crypto) work
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 // Response time tracking
@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
             .insert(matches)
             .values({ user1Id: first, user2Id: second })
             .onConflictDoNothing()
-            .returning({ id: matches.id })
+            .returning()
 
           if (newMatch) {
             results.matches.push(newMatch.id)

@@ -1,19 +1,37 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
     const startTime = Date.now()
 
-    // Test database connection
+    // If DATABASE_URL is SQLite in a production-like environment, skip DB checks
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    const dbUrl = process.env.DATABASE_URL || ''
+
     const dbStart = Date.now()
     let dbConnected = false
-    try {
-      await prisma.user.findFirst()
-      dbConnected = true
-    } catch (error) {
-      console.error('Database health check failed:', error)
+    if (isProduction && (dbUrl.startsWith('file:') || dbUrl.includes('sqlite'))) {
+      console.warn('Skipping DB health check: SQLite detected in production environment')
+    } else {
+      // Lazy-import prisma to avoid DB init during module import/static generation
+      let prisma
+      try {
+        prisma = (await import('@/lib/prisma')).prisma
+      } catch (impErr) {
+        console.error('Prisma import error in health route:', impErr)
+      }
+
+      try {
+        if (prisma) {
+          await prisma.user.findFirst()
+          dbConnected = true
+        }
+      } catch (error) {
+        console.error('Database health check failed:', error)
+      }
     }
+
     const dbResponseTime = Date.now() - dbStart
 
     // Test cache connection (mock for now)

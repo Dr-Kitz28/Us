@@ -37,12 +37,12 @@ function getRedis(): Redis | null {
 
   if (_redis) return _redis
 
-  _redis = new Redis(redisUrl, {
+  _redis = new Redis({
+    url: redisUrl,
     maxRetriesPerRequest: 3,
-    retryDelayOnFailover: 100,
     enableReadyCheck: true,
     lazyConnect: true,
-  })
+  } as any)
 
   _redis.on('error', (err) => {
     console.error('Redis error:', err.message)

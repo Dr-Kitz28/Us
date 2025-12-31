@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+export const runtime = 'nodejs'
 import { StableMatchingEngine, ReinforcementLearningMatcher } from '@/lib/matchingAlgorithms'
 import { prisma } from '@/lib/prisma'
 import { isFeatureEnabled } from '@/lib/featureFlags'

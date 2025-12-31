@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
   return (
     <main className="flex flex-col items-center justify-center gap-6 py-24">

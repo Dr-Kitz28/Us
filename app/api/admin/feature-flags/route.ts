@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+// Admin APIs rely on Node runtime
+export const runtime = 'nodejs'
 import { getFeatureFlag, setFeatureFlag } from '@/lib/featureFlags'
 
 // All available feature flags with metadata

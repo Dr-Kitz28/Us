@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+// metrics endpoint needs Node runtime for monitoring utilities
+export const runtime = 'nodejs'
 import { metrics } from '@/lib/observability/monitoring'
 
 export async function GET(_req: NextRequest) {

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+// Ensure this route runs on Node runtime (ioredis requires Node)
+export const runtime = 'nodejs'
 import { getRedis } from '@/lib/cache/redis'
 
 export async function GET() {
