@@ -47,8 +47,8 @@ jobs:
           done
           pg_isready -h localhost -p 5432 -U postgres || (echo "Postgres did not become ready" && exit 1)
 
-      - name: Sync Prisma schema to DB (CI)
-        run: npx prisma db push --accept-data-loss
+      - name: Sync DB schema with Drizzle (CI)
+        run: npm run drizzle:push
 
       - name: Run tests
         run: npm test --silent
