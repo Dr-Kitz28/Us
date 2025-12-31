@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Toggle to install Playwright browsers in CI when true (default: false)
+      RUN_PLAYWRIGHT: 'false'
     strategy:
       matrix:
         node-version: [18.x]
@@ -36,8 +39,22 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Install Playwright browsers (optional)
+        if: ${{ env.RUN_PLAYWRIGHT == 'true' }}
+        run: npx playwright install --with-deps
 
       - name: Wait for Postgres to be ready
         run: |
