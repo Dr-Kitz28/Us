@@ -29,11 +29,17 @@ export class RedisCache {
   protected isConnected: boolean = false
 
   constructor(protected config: CacheConfig) {
+    // Auto-detect TLS from the URL (rediss://) unless explicitly configured
+    const urlScheme = (config.redis.url || '').toLowerCase()
+    const inferredTls = urlScheme.startsWith('rediss://') || Boolean(config.redis.tls)
+
+    console.info('Redis: initializing', { url: config.redis.url ? config.redis.url.replace(/:\/\/.*@/, '://:*****@') : undefined, tls: inferredTls })
+
     this.client = createClient({
       url: config.redis.url,
       password: config.redis.password,
       socket: {
-        tls: config.redis.tls,
+        tls: inferredTls,
         reconnectStrategy: (retries) => {
           if (retries > 10) {
             console.error('Redis: Max retries reached')

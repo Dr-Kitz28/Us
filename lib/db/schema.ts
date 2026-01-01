@@ -33,6 +33,7 @@ export const users = pgTable('users', {
   password: text('password').notNull(),
   name: text('name'),
   image: text('image'),
+  role: text('role').default('user').notNull(), // 'user' or 'admin'
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
@@ -40,6 +41,7 @@ export const users = pgTable('users', {
   // Indexes for 100k MAU performance
   emailIdx: index('users_email_idx').on(table.email),
   createdAtIdx: index('users_created_at_idx').on(table.createdAt),
+  roleIdx: index('users_role_idx').on(table.role),
 }))
 
 export const usersRelations = relations(users, ({ one, many }) => ({

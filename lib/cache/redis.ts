@@ -11,7 +11,12 @@ function ensureEnv() {
 export function getRedis(): Redis {
   if (client) return client
   ensureEnv()
-  client = new Redis(process.env.REDIS_URL as string)
+  // Mask credentials when logging
+  const rawUrl = process.env.REDIS_URL as string
+  const masked = rawUrl.replace(/:\/\/.*@/, '://:*****@')
+  const tlsDetected = rawUrl.toLowerCase().startsWith('rediss://')
+  console.info('ioredis: initializing', { url: masked, tls: tlsDetected })
+  client = new Redis(rawUrl)
   client.on('error', (err) => {
     // keep minimal logging here; callers may attach more context
     // avoid throwing on errors so server can continue to operate
