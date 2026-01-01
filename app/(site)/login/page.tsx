@@ -19,7 +19,11 @@ export default function LoginPage() {
     const res = await signIn('credentials', { email, password, redirect: false })
     setLoading(false)
     if (!res || res.error) {
-      setError(res?.error ?? 'Login failed')
+      // Map NextAuth's generic CredentialsSignin to a friendlier, actionable message
+      const friendly = res?.error === 'CredentialsSignin'
+        ? 'Invalid email or password. Reset your password or use the debug page to verify your account.'
+        : (res?.error ?? 'Login failed')
+      setError(friendly)
     } else {
       window.location.href = '/app/feed'
     }
@@ -54,7 +58,16 @@ export default function LoginPage() {
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="mt-3 text-sm text-red-600">
+          <p>{error}</p>
+          <p className="mt-2">
+            <a href="/debug-auth" className="underline text-red-600 hover:text-red-800">Troubleshoot with debug page</a>
+            <span className="mx-2">·</span>
+            <a href="/register" className="underline text-red-600 hover:text-red-800">Create account / reset</a>
+          </p>
+        </div>
+      )}
       
       {/* Test user hint */}
       <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
