@@ -79,6 +79,22 @@ jobs:
           fi
           npm run drizzle:migrate
 
+      - name: Post-migrate health check (verify tables)
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        run: |
+          if [ -z "$POSTGRES_URL" ]; then
+            echo "POSTGRES_URL secret not set; skipping health check";
+            exit 0;
+          fi
+          echo "Checking for expected tables in public schema..."
+          COUNT=$(psql "$POSTGRES_URL" -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND lower(table_name) IN ('users','profiles','photos','matches','likes');" | tr -d '[:space:]')
+          echo "Found $COUNT expected tables"
+          if [ -z "$COUNT" ] || [ "$COUNT" -lt 3 ]; then
+            echo "Migration health check failed: expected tables missing" >&2
+            exit 1
+          fi
+
   integration-tests:
     name: Integration Tests (DB)
     runs-on: ubuntu-latest
