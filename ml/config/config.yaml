@@ -1,0 +1,157 @@
+# Training Configuration for Uz ML Models
+
+# Database connection (use env vars in production)
+database:
+  url: ${POSTGRES_URL}
+  pool_size: 5
+
+# Object storage for artifacts
+storage:
+  provider: r2  # cloudflare r2
+  bucket: uz-ml-artifacts
+  endpoint: ${R2_ENDPOINT}
+  access_key: ${R2_ACCESS_KEY}
+  secret_key: ${R2_SECRET_KEY}
+
+# Data extraction settings
+data:
+  # Event types to extract
+  events:
+    - impressions
+    - swipe_batches
+    - matches
+    - messages_meta
+    - blocks
+    - reports
+  
+  # Retention and sampling
+  retention_days: 90
+  sampling_rate: 0.1  # for non-essential analytics
+  
+  # Privacy
+  hash_user_ids: true
+  exclude_pii: true
+
+# Embedding model configuration
+embeddings:
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  embedding_dim: 384
+  max_seq_length: 256
+  batch_size: 32
+  
+  # Fine-tuning (when data permits)
+  finetune:
+    enabled: false
+    learning_rate: 2e-5
+    epochs: 3
+    warmup_steps: 100
+
+# Ranking model configuration
+ranking:
+  model_type: lightgbm
+  
+  features:
+    # Embedding features
+    - embedding_cosine_similarity
+    - embedding_euclidean_distance
+    
+    # Behavioral features
+    - user_activity_score
+    - candidate_activity_score
+    - avg_session_duration
+    - swipe_rate_7d
+    
+    # Reciprocity features
+    - mutual_like_probability
+    - response_rate_prediction
+    
+    # Compatibility features
+    - age_difference
+    - distance_km
+    - interest_overlap_score
+    - lifestyle_compatibility
+  
+  hyperparameters:
+    num_leaves: 31
+    learning_rate: 0.05
+    n_estimators: 200
+    min_child_samples: 20
+    subsample: 0.8
+    colsample_bytree: 0.8
+
+# Safety classifier configuration
+safety:
+  model_type: distilbert
+  labels:
+    - inappropriate_content
+    - spam_scam
+    - harassment
+    - fake_profile
+  
+  thresholds:
+    inappropriate_content: 0.7
+    spam_scam: 0.8
+    harassment: 0.6
+    fake_profile: 0.75
+
+# ANN index configuration
+ann_index:
+  algorithm: hnsw
+  
+  hnsw:
+    space: cosine
+    ef_construction: 200
+    M: 16
+    ef_search: 100
+  
+  # Index partitioning (for scale)
+  partitions:
+    enabled: false
+    by: gender  # partition by gender for efficiency
+    rebuild_frequency: daily
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - precision_at_k
+    - recall_at_k
+    - ndcg
+    - mrr
+    - auc_roc
+  
+  k_values: [5, 10, 20, 50]
+  
+  # A/B test integration
+  experiment_tracking:
+    enabled: true
+    backend: mlflow
+    tracking_uri: ${MLFLOW_TRACKING_URI}
+
+# Training infrastructure
+infrastructure:
+  # Cost-bounded: use free resources
+  training:
+    platform: local  # or 'colab'
+    gpu: false  # set true for Colab
+    
+  # Batch scoring
+  scoring:
+    platform: local  # or 'oracle_vm'
+    batch_size: 1000
+    
+  # Model serving
+  serving:
+    platform: edge  # cloudflare workers
+    cache_ttl: 3600
+
+# Logging and monitoring
+logging:
+  level: INFO
+  format: json
+  
+  # Metrics to track
+  metrics:
+    - training_loss
+    - validation_loss
+    - inference_latency
+    - index_build_time
