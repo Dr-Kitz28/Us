@@ -1,7 +1,10 @@
 // Research-backed recommendation engine API with RSBM integration
 import { NextRequest, NextResponse } from 'next/server';
+
 // Ensure Node runtime for server-side modules
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';

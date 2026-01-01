@@ -31,15 +31,40 @@ export class RedisCache {
   constructor(protected config: CacheConfig) {
     // Auto-detect TLS from the URL (rediss://) unless explicitly configured
     const urlScheme = (config.redis.url || '').toLowerCase()
-    const inferredTls = urlScheme.startsWith('rediss://') || Boolean(config.redis.tls)
+    const urlSaysTls = urlScheme.startsWith('rediss://')
+    
+    // Honor REDIS_TLS env to override TLS behavior (useful when rediss:// but server has no TLS)
+    const tlsOverride = process.env.REDIS_TLS
+    let useTls: boolean
+    if (tlsOverride === 'true') {
+      useTls = true
+    } else if (tlsOverride === 'false') {
+      useTls = false
+    } else if (config.redis.tls !== undefined) {
+      useTls = config.redis.tls
+    } else {
+      useTls = urlSaysTls
+    }
 
-    console.info('Redis: initializing', { url: config.redis.url ? config.redis.url.replace(/:\/\/.*@/, '://:*****@') : undefined, tls: inferredTls })
+    // Convert rediss:// to redis:// if TLS is disabled
+    let connectionUrl = config.redis.url
+    if (urlSaysTls && !useTls) {
+      connectionUrl = config.redis.url.replace(/^rediss:\/\//i, 'redis://')
+      console.info('Redis: converted rediss:// to redis:// (TLS disabled via REDIS_TLS=false)')
+    }
+
+    console.info('Redis: initializing', { 
+      url: connectionUrl ? connectionUrl.replace(/:\/\/.*@/, '://:*****@') : undefined, 
+      urlSaysTls,
+      tlsOverride,
+      useTls 
+    })
 
     this.client = createClient({
-      url: config.redis.url,
+      url: connectionUrl,
       password: config.redis.password,
       socket: {
-        tls: inferredTls,
+        tls: useTls,
         reconnectStrategy: (retries) => {
           if (retries > 10) {
             console.error('Redis: Max retries reached')

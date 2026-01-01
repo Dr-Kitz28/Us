@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { db } from '@/lib/db'
 import { users, matches, profiles, photos } from '@/lib/db/schema'
-import { eq, or } from 'drizzle-orm'
+import { eq, or, inArray } from 'drizzle-orm'
 
 export async function GET() {
   try {
@@ -42,25 +45,28 @@ export async function GET() {
       })
     }
 
-    // Get all unique user IDs from matches
-    const userIds = new Set<string>()
+    // Get all unique user IDs from matches (excluding current user for efficiency)
+    const otherUserIds: string[] = []
     matchResults.forEach(match => {
-      userIds.add(match.user1Id)
-      userIds.add(match.user2Id)
+      const otherId = match.user1Id === currentUser.id ? match.user2Id : match.user1Id
+      if (!otherUserIds.includes(otherId)) {
+        otherUserIds.push(otherId)
+      }
     })
 
-    // Fetch all users, profiles, and photos in batch
-    const allUsers = await db.select().from(users).where(
-      or(...Array.from(userIds).map(id => eq(users.id, id)))
-    )
-    
-    const allProfiles = await db.select().from(profiles).where(
-      or(...Array.from(userIds).map(id => eq(profiles.userId, id)))
-    )
-    
-    const allPhotos = await db.select().from(photos).where(
-      or(...Array.from(userIds).map(id => eq(photos.userId, id)))
-    )
+    // If no other users, return empty matches
+    if (otherUserIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        matches: [],
+        count: 0
+      })
+    }
+
+    // Fetch all users, profiles, and photos in batch using inArray for safety
+    const allUsers = await db.select().from(users).where(inArray(users.id, otherUserIds))
+    const allProfiles = await db.select().from(profiles).where(inArray(profiles.userId, otherUserIds))
+    const allPhotos = await db.select().from(photos).where(inArray(photos.userId, otherUserIds))
 
     // Create lookup maps
     const userMap = new Map(allUsers.map(u => [u.id, u]))

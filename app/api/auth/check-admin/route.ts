@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { checkAdminAccess } from '@/lib/adminAuth'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 /**
  * Check if the current user has admin access

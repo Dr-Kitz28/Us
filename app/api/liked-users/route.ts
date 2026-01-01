@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 // Use Node runtime to allow Node modules in server handlers
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'

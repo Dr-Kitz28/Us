@@ -11,18 +11,51 @@ function ensureEnv() {
 export function getRedis(): Redis {
   if (client) return client
   ensureEnv()
-  // Mask credentials when logging
+  
   const rawUrl = process.env.REDIS_URL as string
   const masked = rawUrl.replace(/:\/\/.*@/, '://:*****@')
-  const tlsDetected = rawUrl.toLowerCase().startsWith('rediss://')
-  console.info('ioredis: initializing', { url: masked, tls: tlsDetected })
-  client = new Redis(rawUrl)
+  
+  // Redis Cloud URL may say rediss:// but server might not have TLS enabled
+  // Check REDIS_TLS env to explicitly control TLS behavior
+  // Default: if URL says rediss://, try TLS; but allow override via REDIS_TLS=false
+  const urlSaysTls = rawUrl.toLowerCase().startsWith('rediss://')
+  const tlsOverride = process.env.REDIS_TLS
+  
+  // Determine final TLS setting:
+  // - REDIS_TLS=true -> force TLS
+  // - REDIS_TLS=false -> force no TLS (useful when rediss:// URL but server has no TLS)
+  // - REDIS_TLS not set -> follow URL scheme
+  let useTls: boolean
+  if (tlsOverride === 'true') {
+    useTls = true
+  } else if (tlsOverride === 'false') {
+    useTls = false
+  } else {
+    useTls = urlSaysTls
+  }
+  
+  console.info('ioredis: initializing', { url: masked, urlSaysTls, tlsOverride, useTls })
+  
+  // If URL says rediss:// but we don't want TLS, convert to redis://
+  let connectionUrl = rawUrl
+  if (urlSaysTls && !useTls) {
+    connectionUrl = rawUrl.replace(/^rediss:\/\//i, 'redis://')
+    console.info('ioredis: converted rediss:// to redis:// (TLS disabled)')
+  }
+  
+  // Create client with explicit TLS config if needed
+  if (useTls && !urlSaysTls) {
+    // Force TLS on a redis:// URL
+    client = new Redis(connectionUrl, { tls: {} })
+  } else {
+    client = new Redis(connectionUrl)
+  }
+  
   client.on('error', (err) => {
-    // keep minimal logging here; callers may attach more context
-    // avoid throwing on errors so server can continue to operate
-    // eslint-disable-next-line no-console
+    // Log but don't throw - allow graceful degradation
     console.error('Redis error', err)
   })
+  
   return client
 }
 
