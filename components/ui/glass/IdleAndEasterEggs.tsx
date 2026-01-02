@@ -303,7 +303,13 @@ export function EasterEggEngine({ onUnlock, children }: EasterEggEngineProps) {
   // Expose unlock function for external triggers
   useEffect(() => {
     (window as any).__unlockEasterEgg = unlockEgg
-    return () => delete (window as any).__unlockEasterEgg
+    return () => {
+      // ensure cleanup returns void (delete returns boolean)
+      // avoid returning the result of `delete` which is a boolean
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      delete (window as any).__unlockEasterEgg
+    }
   }, [unlockEgg])
   
   return (
