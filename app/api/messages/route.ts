@@ -158,9 +158,43 @@ export async function GET(request: NextRequest) {
       if (!isDevBypass) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
 
       const channel = `match:${matchIdStream}:message`
-      const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379'
-      const redisClient = createClient({ url: redisUrl })
-      await redisClient.connect()
+      // Respect REDIS_TLS override and convert scheme when needed
+      let redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379'
+      const urlSaysTls = redisUrl.toLowerCase().startsWith('rediss://')
+      const tlsOverride = process.env.REDIS_TLS
+      let useTls = urlSaysTls
+      if (tlsOverride === 'true') useTls = true
+      else if (tlsOverride === 'false') useTls = false
+
+      if (urlSaysTls && !useTls) {
+        redisUrl = redisUrl.replace(/^rediss:\/\//i, 'redis://')
+        console.info('messages SSE: converted rediss:// to redis:// (REDIS_TLS=false)')
+      }
+
+      let redisClient = createClient({ url: redisUrl })
+      // prevent unhandled error events from crashing build logs
+      redisClient.on('error', (e) => console.error('Redis SSE error:', e && (e as any).message))
+
+      // Try connecting. On TLS packet errors, attempt one fallback without TLS.
+      let attemptedFallback = false
+      try {
+        await redisClient.connect()
+      } catch (err: any) {
+        const msg = String(err?.message || '')
+        const isTlsPacketError = msg.includes('packet length too long') || msg.includes('Client network socket disconnected before secure TLS connection')
+        if (!attemptedFallback && urlSaysTls && !useTls && isTlsPacketError) {
+          attemptedFallback = true
+          try {
+            await redisClient.quit()
+          } catch (_) {}
+          const fallbackUrl = (process.env.REDIS_URL || '').replace(/^rediss:\/\//i, 'redis://') || 'redis://127.0.0.1:6379'
+          redisClient = createClient({ url: fallbackUrl })
+          redisClient.on('error', (e) => console.error('Redis SSE fallback error:', e && (e as any).message))
+          await redisClient.connect()
+        } else {
+          throw err
+        }
+      }
       const encoder = new TextEncoder()
 
       const stream = new ReadableStream({
