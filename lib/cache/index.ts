@@ -37,8 +37,28 @@ function getRedis(): Redis | null {
 
   if (_redis) return _redis
 
+  // Determine TLS behavior similar to other cache modules
+  const urlSaysTls = (redisUrl || '').toLowerCase().startsWith('rediss://')
+  const tlsOverride = process.env.REDIS_TLS
+  let useTls: boolean
+  if (tlsOverride === 'true') {
+    useTls = true
+  } else if (tlsOverride === 'false') {
+    useTls = false
+  } else {
+    useTls = urlSaysTls
+  }
+
+  let connectionUrl = redisUrl
+  if (urlSaysTls && !useTls) {
+    connectionUrl = redisUrl.replace(/^rediss:\/\//i, 'redis://')
+    console.info('Redis: converted rediss:// to redis:// (TLS disabled via REDIS_TLS)')
+  }
+
+  console.info('Redis: initializing', { url: connectionUrl ? connectionUrl.replace(/:\/\/.*@/, '://:*****@') : undefined, urlSaysTls, tlsOverride, useTls })
+
   _redis = new Redis({
-    url: redisUrl,
+    url: connectionUrl,
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
     lazyConnect: true,
