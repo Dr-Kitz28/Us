@@ -404,7 +404,7 @@ export default function MessagesPage() {
       </div>
 
       {/* Conversation Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col pb-20">
         {selectedMatch ? (
           <>
             {/* Header */}
