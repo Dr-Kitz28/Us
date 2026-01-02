@@ -116,7 +116,25 @@ export const prisma = {
       const { db: database } = await import('./db')
       const schema = await import('./db/schema')
       const data = opts?.data || {}
-      const [row] = await database.insert(schema.users).values(data).returning()
+      
+      // Extract user-level fields only (exclude nested relations like profile)
+      const { profile, photos, ...userData } = data
+      
+      const [row] = await database.insert(schema.users).values(userData).returning()
+      
+      // Handle nested profile creation (Prisma-style: profile: { create: {...} })
+      if (profile?.create && row?.id) {
+        const profileData = {
+          userId: row.id,
+          bio: profile.create.bio ?? null,
+          interests: profile.create.interests ?? null,
+          gender: profile.create.gender ?? null,
+          location: profile.create.location ?? null,
+          age: profile.create.age ?? null,
+        }
+        await database.insert(schema.profiles).values(profileData).onConflictDoNothing()
+      }
+      
       return row as unknown as User
     },
 
