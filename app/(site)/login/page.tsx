@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,6 +29,25 @@ export default function LoginPage() {
       window.location.href = '/app/feed'
     }
   }
+
+  // Check whether current user is admin (used to show debug/test-user links)
+  // This will typically be false for unauthenticated users; only show hints to admins.
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/check-admin')
+        if (!mounted) return
+        if (res.ok) {
+          const j = await res.json()
+          setIsAdmin(Boolean(j?.isAdmin))
+        }
+      } catch (e) {
+        // ignore
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
 
   return (
     <main className="mx-auto max-w-sm py-16">
@@ -69,24 +89,26 @@ export default function LoginPage() {
         </div>
       )}
       
-      {/* Test user hint */}
-      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-blue-800 mb-1">💡 Test Users Available</h3>
-        <p className="text-xs text-blue-600 mb-2">
-          If you need test users, try these credentials:
-        </p>
-        <div className="space-y-1 text-xs">
-          <div className="bg-white px-2 py-1 rounded border font-mono">
-            Email: alex@example.com<br/>
-            Password: password123
+      {/* Test user hint - only visible to admins */}
+      {isAdmin && (
+        <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-sm font-semibold text-blue-800 mb-1">💡 Test Users Available</h3>
+          <p className="text-xs text-blue-600 mb-2">
+            If you need test users, try these credentials:
+          </p>
+          <div className="space-y-1 text-xs">
+            <div className="bg-white px-2 py-1 rounded border font-mono">
+              Email: alex@example.com<br/>
+              Password: password123
+            </div>
           </div>
+          <p className="text-xs text-blue-500 mt-2">
+            <a href="/debug-auth" className="underline hover:text-blue-700">
+              🔧 Visit debug page to create more test users
+            </a>
+          </p>
         </div>
-        <p className="text-xs text-blue-500 mt-2">
-          <a href="/debug-auth" className="underline hover:text-blue-700">
-            🔧 Visit debug page to create more test users
-          </a>
-        </p>
-      </div>
+      )}
     </main>
   )
 }
