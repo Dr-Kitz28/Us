@@ -305,10 +305,8 @@ export function EasterEggEngine({ onUnlock, children }: EasterEggEngineProps) {
     (window as any).__unlockEasterEgg = unlockEgg
     return () => {
       // ensure cleanup returns void (delete returns boolean)
-      // avoid returning the result of `delete` which is a boolean
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      delete (window as any).__unlockEasterEgg
+      // use `void` to discard the boolean result so the cleanup returns void
+      void delete (window as any).__unlockEasterEgg
     }
   }, [unlockEgg])
   
