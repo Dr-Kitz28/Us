@@ -18,6 +18,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
+  "prepare": "husky install",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@opentelemetry/api": "^1.8.0",

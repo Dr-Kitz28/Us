@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running pre-push checks: build"
+# Run a fast pre-push check; change to 'npm test' or tsc as desired
+npm run build || {
+  echo "\nLocal build failed — aborting push. Run 'npm run build' locally to debug."
+  exit 1
+}
+
+exit 0
