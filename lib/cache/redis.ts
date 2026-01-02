@@ -44,17 +44,53 @@ export function getRedis(): Redis {
   }
   
   // Create client with explicit TLS config if needed
-  if (useTls && !urlSaysTls) {
-    // Force TLS on a redis:// URL
-    client = new Redis(connectionUrl, { tls: {} })
-  } else {
-    client = new Redis(connectionUrl)
+  const createClient = (url: string, tlsEnabled: boolean) => {
+    if (tlsEnabled && !urlSaysTls) {
+      return new Redis(url, { tls: {} })
+    }
+    if (tlsEnabled && urlSaysTls) {
+      // url already contains rediss:// and TLS is desired
+      return new Redis(url)
+    }
+    // No TLS
+    return new Redis(url)
   }
-  
-  client.on('error', (err) => {
-    // Log but don't throw - allow graceful degradation
+
+  client = createClient(connectionUrl, useTls)
+
+  // Automatic fallback: if initial connection fails with TLS packet errors,
+  // retry once without TLS (useful when REDIS_URL is rediss:// but server speaks plain TCP).
+  let attemptedFallback = false
+
+  const handleError = async (err: Error & { code?: string }) => {
     console.error('Redis error', err)
-  })
+
+    const msg = String(err?.message || '')
+    const isTlsPacketError = (err && (err.code === 'ERR_SSL_PACKET_LENGTH_TOO_LONG' || msg.includes('packet length too long') || msg.includes('Client network socket disconnected before secure TLS connection')))
+
+    if (!attemptedFallback && urlSaysTls && useTls && isTlsPacketError) {
+      attemptedFallback = true
+      console.warn('ioredis: TLS packet error detected, retrying without TLS (fallback)')
+      try {
+        // attempt graceful quit
+        try {
+          await client?.quit()
+        } catch (_) {
+          try { client?.disconnect() } catch (_) {}
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // create fallback client without TLS
+      const fallbackUrl = connectionUrl.replace(/^rediss:\/\//i, 'redis://')
+      client = createClient(fallbackUrl, false)
+      client.on('error', (e) => console.error('Redis fallback error', e))
+      client.on('connect', () => console.info('ioredis: fallback client connected (no TLS)'))
+    }
+  }
+
+  client.on('error', handleError)
   
   return client
 }
