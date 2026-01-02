@@ -412,3 +412,232 @@ body {
     display: none !important;
   }
 }
+
+/* ============================================
+   Enhanced Glass UI System
+   ============================================ */
+
+/* Animated gradient background */
+.glass-bg-animated {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-bg-animated::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--primary) / 0.2),
+    hsl(38 92% 50% / 0.15),
+    hsl(var(--primary) / 0.2)
+  );
+  animation: glass-rotate 20s linear infinite;
+  filter: blur(60px);
+  z-index: -1;
+}
+
+@keyframes glass-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Film grain overlay */
+.film-grain {
+  position: relative;
+}
+
+.film-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+/* 3D glass panel */
+.glass-3d {
+  @apply bg-white/10 backdrop-blur-xl backdrop-saturate-150;
+  @apply border border-white/20 rounded-2xl;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.glass-3d-hover {
+  @apply glass-3d transition-all duration-300;
+}
+
+.glass-3d-hover:hover {
+  @apply bg-white/15 border-white/30;
+  transform: translateY(-4px) rotateX(2deg);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+/* Specular highlight effect */
+.glass-specular {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-specular::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+}
+
+/* Interactive button animations */
+.btn-glass {
+  @apply relative overflow-hidden;
+  @apply bg-white/10 backdrop-blur-md;
+  @apply border border-white/20 rounded-2xl;
+  @apply transition-all duration-200;
+}
+
+.btn-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-glass:hover::before {
+  transform: translateX(100%);
+}
+
+.btn-glass:hover {
+  @apply bg-white/20 border-white/30;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+}
+
+.btn-glass:active {
+  transform: scale(0.97);
+}
+
+/* Love button with heartbeat */
+.btn-love {
+  @apply bg-gradient-to-r from-rose-500 to-pink-500;
+  @apply text-white font-semibold rounded-full;
+  @apply shadow-lg shadow-rose-500/30;
+  @apply transition-all duration-200;
+}
+
+.btn-love:hover {
+  @apply shadow-xl shadow-rose-500/40;
+  animation: heartbeat 1s ease-in-out;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.05); }
+}
+
+/* DVD bounce animation for idle mode */
+@keyframes dvd-bounce {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(calc(100vw - 150px), calc(50vh - 75px));
+  }
+  50% {
+    transform: translate(calc(50vw - 75px), calc(100vh - 100px));
+  }
+  75% {
+    transform: translate(0, calc(50vh - 50px));
+  }
+}
+
+.idle-bounce {
+  animation: dvd-bounce 30s linear infinite;
+}
+
+/* Confetti animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti-particle {
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+/* Parallax depth layers */
+.parallax-front {
+  transform: translateZ(50px) scale(0.9);
+}
+
+.parallax-mid {
+  transform: translateZ(25px) scale(0.95);
+}
+
+.parallax-back {
+  transform: translateZ(0px) scale(1);
+}
+
+/* Easter egg glow */
+.easter-egg-glow {
+  animation: easter-pulse 2s ease-in-out infinite;
+}
+
+@keyframes easter-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.7);
+  }
+}
+
+/* Grand intro title animation */
+.intro-title {
+  text-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 60px rgba(244, 63, 94, 0.3);
+}
+
+/* Landscape lineup card */
+.lineup-card {
+  @apply rounded-2xl overflow-hidden;
+  @apply transition-all duration-300;
+  transform-style: preserve-3d;
+}
+
+.lineup-card-selected {
+  @apply ring-4 ring-rose-400;
+  box-shadow: 0 20px 40px -10px rgba(244, 63, 94, 0.4);
+}
+
+/* Mini-game styles */
+.minigame-container {
+  @apply rounded-2xl overflow-hidden;
+  @apply bg-white/10 backdrop-blur-md;
+  touch-action: none;
+}
+
+/* AI intro generator bubble */
+.ai-bubble {
+  @apply bg-gradient-to-br from-rose-500 to-pink-500;
+  @apply text-white rounded-2xl rounded-tl-sm;
+  @apply shadow-lg shadow-rose-500/20;
+}
+
